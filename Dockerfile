@@ -2,7 +2,7 @@ FROM phusion/baseimage:master
 MAINTAINER R0GGER
 
 ENV PATH /app/mistserver:$PATH
-ARG MISTSERVER=https://r.mistserver.org/dl/mistserver_64V3.1.tar.gz
+ARG MISTSERVER=https://r.mistserver.org/dl/mistserver_64V3.4.tar.gz
 
 # install basics
 RUN apt-get update
