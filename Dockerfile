@@ -1,7 +1,6 @@
-FROM phusion/baseimage:master
-MAINTAINER R0GGER
+FROM debian:stable-slim
 
-ENV PATH /app/mistserver:$PATH
+ENV PATH="/app/mistserver:${PATH}"
 ARG MISTSERVER=https://r.mistserver.org/dl/mistserver_64V3.4.tar.gz
 
 # install basics
@@ -20,5 +19,8 @@ RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 VOLUME /config /media
 EXPOSE 4242 8080 1935 554
+
+# run
+CMD ["/etc/service/mistserver/run"]
 
 # docker run -d --name mistserver --restart=always --net=host -v <path to video>:/media r0gger/mistserver 
