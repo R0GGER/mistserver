@@ -13,15 +13,24 @@ docker run -d --restart always --name=mistserver \
 -v <path to video>:/media \
 --shm-size=2048m \    
 r0gger/mistserver   
-```   
-  
+```    
+[docker-compose.yml](https://github.com/R0GGER/mistserver/blob/master/docker-compose.yml):   
+```
+services:
+  mistserver:
+    container_name: mistserver
+    image: r0gger/mistserver
+    restart: unless-stopped
+    volumes:
+      - /path-to/config:/config
+      - /path-to/media:/media
+    network_mode: host
+    shm_size: 2048m 
+```  
 **Parameters**    
 * `--net=host` - Recommended! You can change ports within Mistserver Protocols.
 * `-v <path to config>:/config` - config and log files  
 * `-v <path to video>:/media` - video and audio files  
-
-*Special note* - If you'd like to run Mistserver without requiring `--net=host` (`NOT recommended`) then you will need the following ports in your `docker create` command:
-
 * `-p 4242` - Web UI  
 * `-p 1935` - RTMP  
 * `-p 554` - RTSP   
