@@ -1,0 +1,10 @@
+services:
+  mistserver:
+    container_name: mistserver
+    image: r0gger/mistserver
+    restart: unless-stopped
+    volumes:
+      - /path-to/config:/config
+      - /path-to/media:/media
+    network_mode: host
+    shm_size: 2048m 
