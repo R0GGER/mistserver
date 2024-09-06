@@ -3,17 +3,15 @@
 MistServer is a streaming media server that works well in any streaming environment even on a Raspberry Pi! It bridges the gap between dedicated media servers and web servers, performing the best of both worlds when it comes to media streaming delivery.
 
 ### Mistserver is now fully open source!! 
-Mistserver 3.0 has all now all Pro features, more info [here](https://news.mistserver.org/news/108/Release+notes+summary+3.0) and [changelog](https://releases.mistserver.org/changelog).
-
-**What makes this docker build better as the official one from DDTECH/MistServer?**   
-It's more secure and because `docker stop` will gracefully shutdown your processes, it prevents data corruption and all config-files will be saved before shutting down.
+Mistserver 3.4 has all now all Pro features, more info [here](https://www.reddit.com/r/selfhosted/comments/1f9m9zl/mistserver_media_streaming_now_public_domain/) and [changelog](https://releases.mistserver.org/changelog).
 
 # Usage 
 ```
 docker run -d --restart always --name=mistserver \   
 --net=host \    
 -v <path to config>:/config \   
--v <path to video>:/media \     
+-v <path to video>:/media \
+--shm-size=2048m \    
 r0gger/mistserver   
 ```   
   
@@ -28,18 +26,17 @@ r0gger/mistserver
 * `-p 1935` - RTMP  
 * `-p 554` - RTSP   
 * `-p 8080` - HTTP / HLS 
-* `-v /etc/localhost:ro` - for timesync (read-only)   
+* `-v /etc/localhost:ro` - for timesync (read-only)
+* `--shm-size=2048m` - amount of shared memory 
 
 ### Webinterface
 1. Webui: http://mydomain.tld:4242 and enter a username/password.   
 2. Click on "Enable protocols" and change ports if necessary.
 3. Enter a "Human readable name" and thick "Force JSON file save". 
 
-### Wiki
-- [Manual & Changelog](https://github.com/R0GGER/mistserver/wiki/MistServer-Manual,-Changelog-&-Tutorials#manual--changelog)
-- [Tutorials](https://github.com/R0GGER/mistserver/wiki/MistServer-Manual,-Changelog-&-Tutorials#tutorials)
+### MistServer
+- [MistServer](https://mistserver.org)
+- [Changelog](https://releases.mistserver.org/changelog)
+- [Documentation](https://docs.mistserver.org/)
 
-### Links
-Website: http://mistserver.org   
-Github: https://github.com/DDVTECH/mistserver   
 
