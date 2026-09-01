@@ -1,0 +1,145 @@
+# Publishes the image to GitHub Container Registry (ghcr.io).
+name: Build and push Docker image
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - Dockerfile
+      - .github/workflows/docker-publish.yml
+  schedule:
+    # Weekly rebuild so :latest tracks new MistServer releases
+    - cron: "0 4 * * 1"
+  workflow_dispatch:
+    inputs:
+      mistserver_version:
+        description: "MistServer version to package (latest or e.g. 3.11.2)"
+        required: true
+        default: "latest"
+
+concurrency:
+  group: docker-publish
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+  MISTSERVER_VERSION: ${{ github.event.inputs.mistserver_version || 'latest' }}
+
+jobs:
+  build:
+    name: Build ${{ matrix.tag }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            tag: amd64
+          - platform: linux/386
+            tag: i386
+          - platform: linux/arm64
+            tag: arm64
+          - platform: linux/arm/v7
+            tag: armv7
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set image name
+        run: echo "IMAGE=${REGISTRY}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=${{ matrix.tag }},enable=${{ env.MISTSERVER_VERSION == 'latest' }}
+            type=raw,value=${{ env.MISTSERVER_VERSION }}-${{ matrix.tag }},enable=${{ env.MISTSERVER_VERSION != 'latest' }}
+          labels: |
+            org.opencontainers.image.title=MistServer
+            org.opencontainers.image.description=MistServer streaming media server
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: ${{ matrix.platform }}
+          push: true
+          pull: true
+          # Always re-fetch the MistServer tarball instead of a cached layer
+          no-cache: true
+          provenance: false
+          sbom: false
+          build-args: |
+            MISTSERVER_VERSION=${{ env.MISTSERVER_VERSION }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  manifest:
+    name: Multi-arch latest
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Set image name
+        run: echo "IMAGE=${REGISTRY}/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create multi-arch tag
+        env:
+          VERSION: ${{ env.MISTSERVER_VERSION }}
+        run: |
+          set -eux
+          if [ "$VERSION" = "latest" ]; then
+            sources=(
+              "${IMAGE}:amd64"
+              "${IMAGE}:i386"
+              "${IMAGE}:arm64"
+              "${IMAGE}:armv7"
+            )
+          else
+            sources=(
+              "${IMAGE}:${VERSION}-amd64"
+              "${IMAGE}:${VERSION}-i386"
+              "${IMAGE}:${VERSION}-arm64"
+              "${IMAGE}:${VERSION}-armv7"
+            )
+          fi
+
+          docker buildx imagetools create \
+            -t "${IMAGE}:${VERSION}" \
+            "${sources[@]}"
+
+          docker buildx imagetools inspect "${IMAGE}:${VERSION}"
