@@ -1,0 +1,3 @@
+# Keep text files as LF so GitHub Actions and Linux Docker checkouts
+# stay consistent on Windows (overrides core.autocrlf).
+* text=auto eol=lf
