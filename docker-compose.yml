@@ -1,7 +1,8 @@
 services:
   mistserver:
     container_name: mistserver
-    image: r0gger/mistserver
+    image: ghcr.io/r0gger/mistserver:latest
+    pull_policy: always
     restart: unless-stopped
     volumes:
       - /path-to/config:/config
